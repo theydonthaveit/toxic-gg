@@ -1,0 +1,22 @@
+{
+    "name": "PvP",
+    "description": "eSports gaming application",
+    "image": "",
+    "repository": "https://github.com/theydonthaveit/python-pypy-pvp",
+    "keywords": ["python", "flask", "riot" ],
+    "addons": [ "heroku-postgresql" ],
+    "env": {
+        "SECRET_KEY": {
+            "description": "none",
+            "generator": "secret"
+        }
+    },
+    "environments": {
+        "test": {
+            "scripts": {
+                "test-setup": "",
+                "test": ""
+            }
+        }
+    }
+}
