@@ -1,0 +1,106 @@
+from flask import Flask
+from flask import render_template, request, url_for, redirect, flash, session, sessions, abort
+from flask_login import LoginManager, login_user, login_required, logout_user
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from passlib.hash import pbkdf2_sha512
+from functools import wraps
+from flask_wtf import FlaskForm
+from wtforms import StringField
+from wtforms.validators import DataRequired
+from database_setup import Base, UserAccount, Engine
+
+Base.metadata.create_all(Engine)
+
+DBsession = sessionmaker(bind=Engine)
+session = DBsession()
+
+app = Flask(__name__)
+app.secret_key = 'xxx'
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def user_loader(username):
+    return session.query(UserAccount).filter_by(
+        name=username
+    ).first()
+
+@login_manager.request_loader
+def request_loader(request):
+    
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return 'cool'
+
+
+@app.route('/dashboard/<int:user_id>', methods=['GET'])
+def dashboard(user_id):
+    return 'you are home'
+
+
+if __name__ == '__main__':
+    app.run(debug=True, use_reloader=True)
+
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'POST':
+#         userExists = check_user(request.form['username'])
+#         if userExists is not None:
+#             if userExists.decode_password(request.form['password']):
+#                 return redirect(url_for('dashboard', user_id=userExists.id))
+#         else:
+#             return redirect(url_for('register'))
+#     else:
+#         return render_template('login.html')
+
+
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     if request.method == 'POST':
+#         userExists = check_user(request.form['username'])
+#         if userExists is not None:
+#             return redirect(url_for('login'))
+#         else:
+#             def encode_password(password):
+#                 return pbkdf2_sha512.hash(password)
+#             user = UserAccount(
+#                 name=request.form['username'],
+#                 password=encode_password(request.form['password'])
+#             )
+#             session.add(user)
+#             session.commit()
+#             return redirect(url_for('dashboard', user_id=user.id))
+#     else:
+#         return render_template('register.html')
+
+<html>
+//     <body>
+//         <h1>REGISTER</h1>
+//         <form action="{{url_for('register')}}" method='post'>
+//             <p>Username:</p>
+//             <input tpye='text' size='30' name='username' />
+//             <p>Password:</p>
+//             <input tpye='text' size='30' name='password' />
+
+//             <input type='submit' value='Create' >
+//         </form>
+//     </body>
+// </html>
+
+<html>
+    <body>
+        <h1>LOGIN</h1>
+        <form action="{{url_for('login')}}" method='post'>
+            <p>Username:</p>
+            <input tpye='text' size='30' name='username' />
+            <p>Password:</p>
+            <input tpye='text' size='30' name='password' />
+
+            <input type='submit' value='Create' >
+        </form>
+    </body>
+</html>

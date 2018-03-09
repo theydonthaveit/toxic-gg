@@ -1,66 +1,102 @@
-from flask import Flask
-from flask import render_template, request, url_for, redirect, flash, session, sessions
-
+from flask import Flask, request, render_template, redirect, url_for
+from flask_login import LoginManager, login_user, login_required, logout_user
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from passlib.hash import pbkdf2_sha512
-from functools import wraps
-
 from database_setup import Base, UserAccount, Engine
+from form import SignupForm
 
 
 Base.metadata.create_all(Engine)
-
 DBsession = sessionmaker(bind=Engine)
 session = DBsession()
 
+
 app = Flask(__name__)
-app.secret_key = 'xxx'
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://localhost:5434/toxic'
 
 
-def check_user(user):
-    return session.query(UserAccount).filter_by(
-        name=user
-    ).first()
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        userExists = check_user(request.form['username'])
-        if userExists is not None:
-            if userExists.decode_password(request.form['password']):
-                return redirect(url_for('dashboard', user_id=userExists.id))
-        else:
-            return redirect(url_for('register'))
-    else:
-        return render_template('login.html')
+@login_manager.user_loader
+def load_user(email):
+    return session.query(UserAccount).filter_by(email = email).first()
 
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/')
+def index():
+    return "Welcome to Flask"
+
+
+@app.route('/signup', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        userExists = check_user(request.form['username'])
-        if userExists is not None:
-            return redirect(url_for('login'))
+    signupForm = SignupForm()
+
+    if request.method == 'GET':
+        return render_template('register.html', form = signupForm)
+    elif request.method == 'POST':
+        if signupForm.validate_on_submit():
+            if session.query(UserAccount).filter_by(email=signupForm.email.data).first() is not None:
+                return "Email address already exists"
+            else:
+                def encode_password(password):
+                    return pbkdf2_sha512.hash(password)
+
+                newuser = UserAccount(
+                    email=signupForm.email.data,
+                    password=encode_password(signupForm.password.data)
+                )
+                session.add(newuser)
+                session.commit()
+                login_user(newuser)
+
+                return "User created!!!"
         else:
-            def encode_password(password):
-                return pbkdf2_sha512.hash(password)
-            user = UserAccount(
-                name=request.form['username'],
-                password=encode_password(request.form['password'])
-            )
-            session.add(user)
-            session.commit()
-            return redirect(url_for('dashboard', user_id=user.id))
-    else:
-        return render_template('register.html')
+            return "Form didn't validate"
 
 
-@app.route('/dashboard/<int:user_id>', methods=['GET'])
-def dashboard(user_id):
-    return 'you are home'
+@app.route('/login', methods=['GET','POST'])
+def login():
+    loginForm = SignupForm()
+
+    if request.method == 'GET':
+        return render_template('login.html', form=loginForm)
+    elif request.method == 'POST':
+        if loginForm.validate_on_submit():
+            user=session.query(UserAccount).filter_by(email=loginForm.email.data).first()
+            if user is not None:
+                if user.decode_password(loginForm.password.data):
+                    login_user(user)
+                    return "User logged in"
+                else:
+                    return "Wrong password"
+            else:
+                return "user doesn't exist"
+        else:
+            return "form not validated"
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return "Logged out"
+
+
+@app.route('/protected')
+@login_required
+def protected():
+    return "protected area"
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return 'You are allowed to be here'
 
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=True)
+    app.run(port=5000, host='localhost', debug=True, use_reloader=True)
