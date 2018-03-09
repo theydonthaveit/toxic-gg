@@ -1,9 +1,9 @@
 {
-    "name": "PvP",
-    "description": "eSports gaming application",
+    "name": "toxic-gg",
+    "description": "game reporting tool",
     "image": "",
-    "repository": "https://github.com/theydonthaveit/python-pypy-pvp",
-    "keywords": ["python", "flask", "riot" ],
+    "repository": "https://github.com/theydonthaveit/toxic-gg",
+    "keywords": ["python", "flask" ],
     "addons": [ "heroku-postgresql" ],
     "env": {
         "SECRET_KEY": {
